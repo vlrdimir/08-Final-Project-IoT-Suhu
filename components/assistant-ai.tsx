@@ -12,10 +12,6 @@ import { MemoizedMarkdown } from "./memoized-markdown";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import {
-  useToggleLampuDalamRumahStore,
-  useToggleSemuaRuanganStore,
-} from "@/hooks/store/toggle";
 
 type TemplateMessage = {
   id: string;
@@ -49,6 +45,7 @@ export default function AssistantAI() {
     listening,
     resetTranscript,
     browserSupportsSpeechRecognition,
+    finalTranscript,
   } = useSpeechRecognition();
 
   // Efek untuk mengisi input dengan hasil transkripsi
@@ -85,11 +82,8 @@ export default function AssistantAI() {
   const [showOnboarding, setShowOnboarding] = useState(messages.length === 0);
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { setToggleSemuaRuangan, toggleSemuaRuangan } =
-    useToggleSemuaRuanganStore();
 
   const isMobile = useIsMobile();
-  const { setToggleLampuDalamRumah } = useToggleLampuDalamRumahStore();
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
@@ -106,15 +100,6 @@ export default function AssistantAI() {
     // Hentikan speech recognition jika sedang berjalan
     if (listening) {
       SpeechRecognition.stopListening();
-    }
-
-    if (messageText.toLowerCase().includes("semua port")) {
-      const lampuStore = useToggleLampuDalamRumahStore.getState();
-      lampuStore.setVisualP3State(!lampuStore.visualP3State);
-      setToggleSemuaRuangan(!toggleSemuaRuangan);
-      console.log("toggleSemuaRuangan", toggleSemuaRuangan);
-
-      setToggleLampuDalamRumah(false);
     }
 
     // Add user message
@@ -170,6 +155,12 @@ export default function AssistantAI() {
       handleSendMessage();
     }
   };
+
+  useEffect(() => {
+    if (finalTranscript) {
+      handleSendMessage(finalTranscript);
+    }
+  }, [finalTranscript]);
 
   return (
     <div className={`flex flex-col ${isMobile ? "h-[350px]" : "h-[400px]"}`}>

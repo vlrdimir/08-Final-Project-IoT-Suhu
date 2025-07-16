@@ -47,7 +47,10 @@ const MQTTContext = createContext<MQTTContextType | null>(null);
 export const MQTTProvider = ({ children }: { children: ReactNode }) => {
   const { setToggleLight } = useToggleLightStore();
   const { setToggleKipas } = useToggleKipasStore();
-  const { setToggleSemuaRuangan } = useToggleSemuaRuanganStore();
+  const { setToggleSemuaRuangan, toggleSemuaRuangan } =
+    useToggleSemuaRuanganStore();
+  const { setToggleLampuDalamRumah } = useToggleLampuDalamRumahStore();
+
   const [client, setClient] = useState<mqtt.MqttClient | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [payload, setPayload] = useState<{ topic?: string; message?: string }>(
@@ -83,6 +86,7 @@ export const MQTTProvider = ({ children }: { children: ReactNode }) => {
         mqttSubscribe({ topic: "toggle-kipas", qos: 0 });
         mqttSubscribe({ topic: "toggle-kipas-1", qos: 0 });
         mqttSubscribe({ topic: "toggle-lampu-dalam-rumah", qos: 0 });
+        mqttSubscribe({ topic: "toggle-semua-ruangan", qos: 0 });
       });
 
       client.on("error", (err: Error) => {
@@ -129,6 +133,15 @@ export const MQTTProvider = ({ children }: { children: ReactNode }) => {
           const newState = msg === "on";
           console.log(`MQTT received toggle-light: ${newState}`);
           setToggleLight(newState);
+        }
+
+        if (topic === "toggle-semua-ruangan") {
+          const isOn = msg === "on" ? true : false;
+          setToggleLampuDalamRumah(isOn);
+          const lampuStore = useToggleLampuDalamRumahStore.getState();
+          lampuStore.setVisualP3State(isOn);
+          setToggleSemuaRuangan(!toggleSemuaRuangan);
+          console.log("toggleSemuaRuangan from mqtt", toggleSemuaRuangan);
         }
 
         if (topic === "toggle-kipas") {
